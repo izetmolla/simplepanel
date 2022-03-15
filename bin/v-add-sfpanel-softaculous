@@ -1,0 +1,133 @@
+#!/bin/bash
+# info: add sfpanel softaculous
+# options: [TYPE]
+#
+# The script enables softaculous plugin
+
+
+#----------------------------------------------------------#
+#                    Variable&Function                     #
+#----------------------------------------------------------#
+
+TYPE=$1
+
+# Includes
+source /etc/profile
+source $SFPANEL/func/main.sh
+source $SFPANEL/conf/sfpanel.conf
+
+
+#----------------------------------------------------------#
+#                    Verifications                         #
+#----------------------------------------------------------#
+
+if [ "$TYPE" = 'WEB' ]; then
+    if [ ! -e "$SFPANEL/softaculous" ] && [ ! -e "$SFPANEL/ioncube" ]; then
+        $BIN/v-schedule-sfpanel-softaculous
+        exit
+    fi
+else
+    cmd="v-add-sfpanel-softaculous"
+    check_cron=$(grep "$cmd" $SFPANEL/data/users/admin/cron.conf 2> /dev/null)
+    if [ ! -z "$check_cron" ]; then
+        eval $check_cron
+        $BIN/v-delete-cron-job admin $JOB
+    fi
+fi
+
+if [ "$SOFTACULOUS" = 'yes' ]; then
+    exit
+fi
+
+
+
+#----------------------------------------------------------#
+#                       Action                             #
+#----------------------------------------------------------#
+
+# Cleaning yum cache
+if [ -d "/etc/sysconfig" ]; then
+    yum -q clean all
+    yum="yum -q -y --noplugins --disablerepo=* --enablerepo=sfpanel"
+else
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update -o Dir::Etc::sourcelist="sources.list.d/sfpanel.list" \
+        -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0" -qq
+fi
+
+# Updating php pacakge
+if [ -z "$($SFPANEL/php/bin/php -v|grep 'PHP 5.6')" ]; then
+    if [ -d "/etc/sysconfig" ]; then
+        $yum -y update sfpanel-php
+        check_result $? "sfpanel-php package upgrade failed" $E_UPDATE
+    else
+        apt-get -y install sfpanel-php
+        check_result $? "sfpanel-php package upgrade failed" $E_UPDATE
+    fi
+fi
+
+# Adding sfpanel-ioncube package
+if [ -d "/etc/sysconfig" ]; then
+    rpm -q sfpanel-ioncube >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        $yum -y install sfpanel-ioncube >/dev/null 2>&1
+        check_result $? "sfpanel-ioncube package installation failed" $E_UPDATE
+    fi
+else
+    dpkg -l sfpanel-ioncube |grep ^ii >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        apt-get -y install sfpanel-ioncube >/dev/null 2>&1
+        check_result $? "sfpanel-ioncube package installation failed" $E_UPDATE
+    fi
+fi
+
+# Adding sfpanel-softaculous package
+if [ -d "/etc/sysconfig" ]; then
+    rpm -q sfpanel-softaculous >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        $yum -y install sfpanel-softaculous >/dev/null 2>&1
+        check_result $? "sfpanel-softaculous package installation failed" $E_UPDATE
+    fi
+else
+    dpkg -l sfpanel-softaculous |grep ^ii >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        apt-get -y install sfpanel-softaculous >/dev/null 2>&1
+        check_result $? "sfpanel-softaculous package installation failed" $E_UPDATE
+    fi
+fi
+
+# Installing softaculous
+if [ ! -e "$SFPANEL/softaculous/vst_installed" ]; then
+    mkdir -p /var/softaculous
+    chown -R admin:admin /var/softaculous
+    cd $SFPANEL/softaculous
+    wget -q http://c.sfpanel.izetmolla.com/3rdparty/softaculous_install.inc
+    $SFPANEL/php/bin/php softaculous_install.inc
+    check_result $? "sfpanel-softaculous package installation failed" $E_UPDATE
+    touch $SFPANEL/softaculous/vst_installed
+fi
+
+# Enabling symlink
+if [ -e "$SFPANEL/disabled_plugins/softaculous" ]; then
+    if [ ! -e "$SFPANEL/web/softaculous" ]; then
+        mv $SFPANEL/disabled_plugins/softaculous $SFPANEL/web/softaculous
+    fi
+fi
+
+# Updating SOFTACULOUS value
+if [ -z "$(grep SOFTACULOUS $SFPANEL/conf/sfpanel.conf)" ]; then
+    echo "SOFTACULOUS='yes'" >> $SFPANEL/conf/sfpanel.conf
+else
+    sed -i "s/SOFTACULOUS.*/SOFTACULOUS='yes'/g" \
+        $SFPANEL/conf/sfpanel.conf
+fi
+
+
+#----------------------------------------------------------#
+#                       Sfpanel                              #
+#----------------------------------------------------------#
+
+# Logging
+log_event "$OK" "$ARGUMENTS"
+
+exit

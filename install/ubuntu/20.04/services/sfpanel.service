@@ -1,0 +1,16 @@
+[Unit]
+Description=Sfpanel
+Documentation=https://spazfeed.com
+After=network.target
+
+[Service]
+Environment=NODE_PORT=8083
+Type=simple
+User=root
+ExecStart=/usr/bin/node /usr/local/sfpanel/nodejs/server.js
+Restart=on-failure
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

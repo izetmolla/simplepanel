@@ -1,0 +1,13 @@
+Source: sfpanel
+Package: sfpanel
+Priority: optional
+Version: 1.0.0-6
+Section: admin
+Maintainer: Serghey Rodin <skid@sfpanel.izetmolla.com>
+Homepage: http://sfpanel.izetmolla.com
+Architecture: amd64
+Depends: bash, awk, sed
+Description: Sfpanel
+ Sfpanel is an open source hosting control panel.
+ Sfpanel has a clean and focused interface without the clutter.
+ Sfpanel has the latest of very innovative technologies.

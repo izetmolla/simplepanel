@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Run triggers only on updates
+if [ -e /usr/local/sfpanel/ioncube/ioncube.sh ]; then
+    /usr/local/sfpanel/ioncube/ioncube.sh add
+fi
+
+exit 0

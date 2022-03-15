@@ -1,0 +1,33 @@
+#!/bin/bash
+# info: update all sfpanel packages
+# options: USER [RESTART]
+#
+# The function of updating all sfpanel packages
+
+
+#----------------------------------------------------------#
+#                    Variable&Function                     #
+#----------------------------------------------------------#
+
+# Importing system variables
+source /etc/profile
+
+# Includes
+source $SFPANEL/func/main.sh
+source $SFPANEL/conf/sfpanel.conf
+
+
+#----------------------------------------------------------#
+#                       Action                             #
+#----------------------------------------------------------#
+
+# Starting update loop
+# for package in sfpanel sfpanel-nginx sfpanel-php sfpanel-ioncube sfpanel-softaculous; do
+#     $BIN/v-update-sys-sfpanel "$package"
+# done
+
+#----------------------------------------------------------#
+#                       Sfpanel                              #
+#----------------------------------------------------------#
+
+exit

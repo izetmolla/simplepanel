@@ -1,0 +1,8 @@
+# Created by sfpanel installer
+Defaults env_keep="SFPANEL"
+Defaults:admin !syslog
+Defaults:admin !requiretty
+Defaults:root !requiretty
+
+# sudo is limited to sfpanel scripts
+admin   ALL=NOPASSWD:/usr/local/sfpanel/bin/*

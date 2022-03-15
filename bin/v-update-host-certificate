@@ -1,0 +1,93 @@
+#!/bin/bash
+# info: update hosts certificates for exim, dovecot & sfpanel-nginx
+# options: user
+# options: hostname
+#
+# Function updates certificates for sfpanel
+
+
+#----------------------------------------------------------#
+#                    Variable&Function                     #
+#----------------------------------------------------------#
+
+whoami=$(whoami)
+if [ "$whoami" != "root" ] && [ "$whoami" != "admin" ] ; then
+    echo "You must be root or admin to execute this script";
+    exit 1;
+fi
+
+
+# Argument definition
+user=$1
+hostname=$2
+
+# Includes
+source $SFPANEL/func/main.sh
+source $SFPANEL/func/ip.sh
+source $SFPANEL/conf/sfpanel.conf
+
+
+#----------------------------------------------------------#
+#                    Verifications                         #
+#----------------------------------------------------------#
+
+check_args '1' "$#" '[USER] [HOSTNAME]'
+is_format_valid 'user'
+is_system_enabled "$WEB_SYSTEM" 'WEB_SYSTEM'
+is_system_enabled "$WEB_SSL" 'SSL_SUPPORT'
+is_object_valid 'user' 'USER' "$user"
+is_object_unsuspended 'user' 'USER' "$user"
+is_object_valid 'web' 'DOMAIN' "$hostname"
+is_object_unsuspended 'web' 'DOMAIN' "$hostname"
+
+if [ ! -f "/home/$user/conf/web/ssl.$hostname.pem" ]; then
+    echo "This domain does not have certificate";
+    exit 1;
+fi
+
+#----------------------------------------------------------#
+#                       Action                             #
+#----------------------------------------------------------#
+
+# Get current datetime for backup of old files
+backup_datetime=`date '+%Y-%m-%d_%H-%M-%S'`
+
+# Keep a backup of the old certificate - todo: remove in production
+#mv $SFPANEL/ssl/certificate.crt $SFPANEL/ssl/certificate.crt_backup_$backup_datetime
+#mv $SFPANEL/ssl/certificate.key $SFPANEL/ssl/certificate.key_backup_$backup_datetime
+
+# Copy hostnames certificates from user dir
+cp /home/$user/conf/web/ssl.$hostname.pem $SFPANEL/ssl/certificate.crt
+cp /home/$user/conf/web/ssl.$hostname.key $SFPANEL/ssl/certificate.key
+
+# Checking exim username for later chowning
+exim_user="exim";
+check_exim_username=$(grep -c '^Debian-exim:' /etc/passwd)
+if [ "$check_exim_username" -eq 1 ]; then
+    exim_user="Debian-exim"
+fi
+
+# Assign exim permissions
+chown $exim_user:mail $SFPANEL/ssl/certificate.crt
+chown $exim_user:mail $SFPANEL/ssl/certificate.key
+
+# Restart exim, dovecot & sfpanel
+$BIN/v-restart-mail
+if [ ! -z "$IMAP_SYSTEM" ]; then
+    $BIN/v-restart-service "$IMAP_SYSTEM"
+fi
+if [ ! -z "$FTP_SYSTEM" ]; then
+    $BIN/v-restart-service "$FTP_SYSTEM"
+fi
+if [ -f "/var/run/sfpanel-nginx.pid" ]; then
+    kill -HUP $(cat /var/run/sfpanel-nginx.pid)
+fi
+
+#----------------------------------------------------------#
+#                       Sfpanel                              #
+#----------------------------------------------------------#
+
+# Logging
+log_event "$OK" "$ARGUMENTS"
+
+exit 0;

@@ -1,0 +1,65 @@
+#!/bin/bash
+# info: delete remote dns host
+# options: HOST
+#
+# The function for deleting the remote dns host from sfpanel configuration.
+
+
+#----------------------------------------------------------#
+#                    Variable&Function                     #
+#----------------------------------------------------------#
+
+# Argument definition
+host=$1
+
+# Includes
+source $SFPANEL/func/main.sh
+source $SFPANEL/func/remote.sh
+source $SFPANEL/conf/sfpanel.conf
+
+
+#----------------------------------------------------------#
+#                    Verifications                         #
+#----------------------------------------------------------#
+
+check_args '1' "$#" 'HOST'
+is_format_valid 'host'
+is_system_enabled "$DNS_CLUSTER" 'DNS_CLUSTER'
+is_object_valid "../../conf/dns-cluster" 'HOST' "$host"
+
+
+#----------------------------------------------------------#
+#                       Action                             #
+#----------------------------------------------------------#
+
+# Deleting remote domains
+$BIN/v-delete-remote-dns-domains $host >>/dev/null 2>&1
+
+# Deleting server
+sed -i "/HOST='$host' /d" $SFPANEL/conf/dns-cluster.conf
+
+# Deleting DNS_CLUSTER key
+check_cluster=$(grep HOST $SFPANEL/conf/dns-cluster.conf |wc -l)
+if [ "$check_cluster" -eq '0' ]; then
+    rm -f $SFPANEL/conf/dns-cluster.conf
+    sed -i "/DNS_CLUSTER=/d" $SFPANEL/conf/sfpanel.conf
+
+    # Delete cron job
+    cmd="sudo /usr/local/sfpanel/bin/v-update-sys-queue dns-cluster"
+    check_cron=$(grep "$cmd" $SFPANEL/data/users/admin/cron.conf 2> /dev/null)
+    if [ ! -z "$check_cron" ]; then
+        eval $check_cron
+        $BIN/v-delete-cron-job admin "$JOB"
+    fi
+fi
+
+
+#----------------------------------------------------------#
+#                       Sfpanel                              #
+#----------------------------------------------------------#
+
+# Logging
+log_history "deleted remote dns server $host" '' 'admin'
+log_event "$OK" "$ARGUMENTS"
+
+exit

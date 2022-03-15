@@ -1,0 +1,47 @@
+#!/bin/bash
+# info: update dns templates
+# options: [RESTART]
+#
+# The function for obtaining updated pack of dns templates.
+
+
+#----------------------------------------------------------#
+#                    Variable&Function                     #
+#----------------------------------------------------------#
+
+# Argument definition
+restart=$1
+
+# Includes
+source $SFPANEL/func/main.sh
+source $SFPANEL/conf/sfpanel.conf
+
+
+#----------------------------------------------------------#
+#                       Action                             #
+#----------------------------------------------------------#
+
+# Get new archive
+tmpdir=$(mktemp -d --dry-run)
+mkdir $tmpdir
+cd $tmpdir
+wget http://c.sfpanel.izetmolla.com/rhel/7/templates.tar.gz -q
+if [ "$?" -ne 0 ]; then
+    echo "Error: can't download template.tar.gz"
+    log_event "$E_CONNECT" "$ARGUMENTS"
+    rm -rf $tmpdir
+    exit $E_CONNECT
+fi
+
+# Update templates
+tar -xzpf templates.tar.gz -C $SFPANEL/data/ templates/dns
+
+
+#----------------------------------------------------------#
+#                       Sfpanel                              #
+#----------------------------------------------------------#
+
+# Clean tmpdir
+rm -rf $tmpdir
+
+exit

@@ -1,0 +1,2 @@
+2022/03/14 19:51:11 [warn] 11725#0: the "ssl" directive is deprecated, use the "listen ... ssl" directive instead in /usr/local/sfpanel/nginx/conf/nginx.conf:89
+2022/03/14 20:05:19 [warn] 1349#0: the "ssl" directive is deprecated, use the "listen ... ssl" directive instead in /usr/local/sfpanel/nginx/conf/nginx.conf:89

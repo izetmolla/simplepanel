@@ -1,0 +1,10 @@
+Source: sfpanel-softaculous
+Package: sfpanel-softaculous
+Priority: optional
+Version: 1.0.0-1
+Section: admin
+Maintainer: Serghey Rodin <skid@sfpanel.izetmolla.com>
+Homepage: https://www.softaculous.com
+Architecture: amd64
+Depends: bash, awk, sed, sfpanel-ioncube
+Description: softaculous plugin for Sfpanel

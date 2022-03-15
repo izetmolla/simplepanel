@@ -1,0 +1,57 @@
+#!/bin/bash
+# info: add system firewall
+# options: NONE
+#
+# The script enables firewall
+
+
+#----------------------------------------------------------#
+#                    Variable&Function                     #
+#----------------------------------------------------------#
+
+# Includes
+source $SFPANEL/func/main.sh
+source $SFPANEL/conf/sfpanel.conf
+
+
+#----------------------------------------------------------#
+#                    Verifications                         #
+#----------------------------------------------------------#
+
+if [ "$FIREWALL_SYSTEM" = 'iptables' ]; then
+    exit
+fi
+
+
+#----------------------------------------------------------#
+#                       Action                             #
+#----------------------------------------------------------#
+
+# Adding firewall directory
+mkdir -p $SFPANEL/data/firewall/
+
+# Adding default ruleset
+if [ ! -e "$SFPANEL/data/firewall/rules.conf" ]; then
+    cp $SFPANEL/install/rhel/7/* $SFPANEL/data/firewall/
+fi
+
+# Updating FIREWAL_SYSTEM value
+if [ -z "$(grep FIREWALL_SYSTEM $SFPANEL/conf/sfpanel.conf)" ]; then
+    echo "FIREWALL_SYSTEM='iptables'" >> $SFPANEL/conf/sfpanel.conf
+else
+    sed -i "s/FIREWALL_SYSTEM.*/FIREWALL_SYSTEM='iptables'/g" \
+        $SFPANEL/conf/sfpanel.conf
+fi
+
+# Updating firewall rules
+$BIN/v-update-firewall
+
+
+#----------------------------------------------------------#
+#                       Sfpanel                              #
+#----------------------------------------------------------#
+
+# Logging
+log_event "$OK" "$ARGUMENTS"
+
+exit

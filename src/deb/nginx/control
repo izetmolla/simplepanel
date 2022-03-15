@@ -1,0 +1,14 @@
+Source: sfpanel-nginx
+Package: sfpanel-nginx
+Priority: optional
+Version: 1.0.0-1
+Section: admin
+Maintainer: Serghey Rodin <skid@sfpanel.izetmolla.com>
+Homepage: http://sfpanel.izetmolla.com
+Architecture: amd64
+Depends: sfpanel
+Description: Sfpanel Nginx
+ Sfpanel is an open source hosting control panel.
+ Sfpanel has a clean and focused interface without the clutter.
+ Sfpanel has the latest of very innovative technologies.
+

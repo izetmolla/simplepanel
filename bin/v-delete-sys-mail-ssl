@@ -1,0 +1,75 @@
+#!/bin/bash
+# info: delete sys sfpanel user ssl certificate
+# options: NONE
+#
+# The script disables user domain ssl synchronization
+
+
+#----------------------------------------------------------#
+#                  Variable & Function                     #
+#----------------------------------------------------------#
+
+# Includes
+source $SFPANEL/func/main.sh
+source $SFPANEL/conf/sfpanel.conf
+
+
+#----------------------------------------------------------#
+#                    Verifications                         #
+#----------------------------------------------------------#
+
+
+#----------------------------------------------------------#
+#                       Action                             #
+#----------------------------------------------------------#
+
+vst_crt="$SFPANEL/ssl/certificate.crt"
+vst_key="$SFPANEL/ssl/certificate.key"
+
+# Updating mail certificate
+case $MAIL_SYSTEM in
+    exim)           conf='/etc/exim/exim.conf';;
+    exim4)          conf='/etc/exim4/exim4.conf.template';;
+esac
+if [ -e "$conf" ]; then
+    sed -e "s|^tls_certificate.*|tls_certificate = $vst_crt|" \
+        -e "s|^tls_privatekey.*|tls_privatekey = $vst_key|" -i $conf
+fi
+
+# Updating imap certificate
+conf="/etc/dovecot/conf.d/10-ssl.conf"
+if [ ! -z "$IMAP_SYSTEM" ] && [ -e "$conf" ]; then
+    sed -e "s|ssl_cert.*|ssl_cert = <$vst_crt|" \
+        -e "s|ssl_key.*|ssl_key = <$vst_key|" -i $conf
+fi
+
+# Moving old certificates
+if [ -e "$SFPANEL/ssl/mail.crt" ]; then
+    mv -f $SFPANEL/ssl/mail.crt $SFPANEL/ssl/mail.crt.old
+fi
+if [ -e "SFPANEL/ssl/mail.key" ]; then
+    mv $SFPANEL/ssl/mail.key SFPANEL/ssl/mail.key.old
+fi
+
+# Updating sfpanel.conf value
+sed -i "/MAIL_CERTIFICATE=/ d" $SFPANEL/conf/sfpanel.conf
+
+
+#----------------------------------------------------------#
+#                       Sfpanel                              #
+#----------------------------------------------------------#
+
+# Restarting services
+if [ "$restart" != 'no' ]; then
+    if [ ! -z "$MAIL_SYSTEM" ]; then
+        $BIN/v-restart-service $MAIL_SYSTEM
+    fi
+    if [ ! -z "$IMAP_SYSTEM" ]; then
+        $BIN/v-restart-service $IMAP_SYSTEM
+    fi
+fi
+
+# Logging
+log_event "$OK" "$ARGUMENTS"
+
+exit

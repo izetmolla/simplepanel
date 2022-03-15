@@ -1,0 +1,56 @@
+#!/bin/bash
+# info: delete backup ftp server
+# options: TYPE
+#
+# The function deletes ftp backup host
+
+
+#----------------------------------------------------------#
+#                    Variable&Function                     #
+#----------------------------------------------------------#
+
+# Argument definition
+type=$1
+
+# Includes
+source $SFPANEL/func/main.sh
+source $SFPANEL/conf/sfpanel.conf
+
+
+#----------------------------------------------------------#
+#                    Verifications                         #
+#----------------------------------------------------------#
+
+check_args '1' "$#" 'TYPE [HOST]'
+types=$(echo "$BACKUP_SYSTEM" |sed "s/,/\n/g" |grep "^$type$")
+if [ -z "$types" ]; then
+    echo "Error: invalid backup type"
+    log_event "$E_INVALID" "$ARGUMENTS"
+    exit $E_INVALID
+fi
+
+
+#----------------------------------------------------------#
+#                       Action                             #
+#----------------------------------------------------------#
+
+# Deleting host config
+rm -f $SFPANEL/conf/$type.backup.conf
+
+
+#----------------------------------------------------------#
+#                       Sfpanel                              #
+#----------------------------------------------------------#
+
+# Updating sfpanel.conf
+bckp=$(echo "$BACKUP_SYSTEM" |\
+    sed "s/,/\n/g"|\
+    sed "s/^$type$//" |\
+    sed "/^$/d"|\
+    sed ':a;N;$!ba;s/\n/,/g')
+sed -i "s/BACKUP_SYSTEM=.*/BACKUP_SYSTEM='$bckp'/g" $SFPANEL/conf/sfpanel.conf
+
+# Logging
+log_event "$OK" "$ARGUMENTS"
+
+exit

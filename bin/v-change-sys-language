@@ -1,0 +1,57 @@
+#!/bin/bash
+# info: change sys language
+# options: LANGUAGE
+#
+# The function for changing system language.
+
+
+#----------------------------------------------------------#
+#                    Variable&Function                     #
+#----------------------------------------------------------#
+
+# Argument definition
+language=$1
+
+# Includes
+source $SFPANEL/func/main.sh
+source $SFPANEL/conf/sfpanel.conf
+
+
+is_language_valid() {
+    if [ ! -e "$SFPANEL/web/inc/i18n/$language.php" ]; then
+        echo "Error: language file $language doesn't exist"
+        log_event "$E_NOTEXIST $ARGUMENTS"
+        exit $E_NOTEXIST
+    fi
+}
+
+
+#----------------------------------------------------------#
+#                    Verifications                         #
+#----------------------------------------------------------#
+
+check_args '1' "$#" 'LANGUAGE'
+is_format_valid 'language'
+is_language_valid $language
+
+
+#----------------------------------------------------------#
+#                       Action                             #
+#----------------------------------------------------------#
+
+# Change language
+if [ -z "$(grep LANGUAGE $SFPANEL/conf/sfpanel.conf)" ]; then
+    echo "LANGUAGE='$language'" >> $SFPANEL/conf/sfpanel.conf
+else
+    sed -i "s/LANGUAGE=.*/LANGUAGE='$language'/g" $SFPANEL/conf/sfpanel.conf
+fi
+
+
+#----------------------------------------------------------#
+#                       Sfpanel                              #
+#----------------------------------------------------------#
+
+# Logging
+log_event "$OK" "$ARGUMENTS"
+
+exit
